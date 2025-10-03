@@ -13,7 +13,7 @@ ufw --force reset
 
 # Set default policies
 ufw default deny incoming
-ufw default allow outgoing
+ufw default deny outgoing
 
 # Allow SSH connections
 # ufw allow 27121
