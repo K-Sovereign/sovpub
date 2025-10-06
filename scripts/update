@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# update + upgrade system + remove unused dependencies 
+apt update && apt full-upgrade -y
