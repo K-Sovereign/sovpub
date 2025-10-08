@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [[ $EUID -ne 0 ]]; then
+   echo "This script must be run as root. Use sudo to execute it." 
+   exit 1
+fi
+
 apt update && upgrade -y
 
 apt install -y \

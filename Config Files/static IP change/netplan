@@ -1,0 +1,13 @@
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 192.168.50.102/24 # Change to your desired static IP address
+      routes:
+        - to: default
+          via: 192.168.50.1 # Change to your gateway IP address
+      nameservers:
+        addresses:
+          - 192.168.50.1 # Change to your DNS server IP address
+      dhcp4: no
