@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# 1. Update package information and install utility dependencies
-sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
+# 0. Update package information and upgrade all installed packages
+sudo apt update && sudo apt upgrade -y
+
+# 1. Install utility dependencies
+sudo apt install -y gnupg software-properties-common curl
 
 # 2. Download and install the official HashiCorp GPG key
 curl -fsSL https://apt.releases.hashicorp.com/gpg | \
@@ -17,8 +20,8 @@ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] \
 https://apt.releases.hashicorp.com $(lsb_release -cs) main" | \
 sudo tee /etc/apt/sources.list.d/hashicorp.list
 
-# 5. Update package information again and install Terraform
-sudo apt-get update && sudo apt-get install terraform -y
+# 5. Update package information again, install Terraform, and remove unused dependencies
+sudo apt update && sudo apt install terraform -y && sudo apt autoremove -y
 
 # 6. Verify that the installation was successful
 terraform -help
