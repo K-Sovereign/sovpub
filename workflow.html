@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f8f9fb;
+    font-family: Georgia, serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+  h1 { font-size: 22px; color: #222; margin-bottom: 4px; letter-spacing: 1px; }
+  p.sub { color: #888; font-size: 13px; font-family: monospace; margin-bottom: 32px; }
+  p.hint { color: #bbb; font-size: 12px; font-family: monospace; margin-top: 16px; }
+  svg { overflow: visible; }
+  .node rect { transition: all 0.2s; }
+  .node text { pointer-events: none; }
+  .node:hover rect { filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)); }
+  line { transition: all 0.2s; }
+</style>
+</head>
+<body>
+
+<h1>App Architecture</h1>
+<p class="sub">Core components &amp; how they connect</p>
+
+<svg id="chart" width="760" height="540"></svg>
+
+<p class="hint">Hover over a node to highlight its connections</p>
+
+<script>
+const W = 130, H = 60;
+
+const nodes = [
+  { id: "user",     label: "User",             sub: null,                      icon: "👤", fill: "#e8f4fd", stroke: "#4a90d9", x: 315, y: 20  },
+  { id: "frontend", label: "Frontend",         sub: "UI / Client",             icon: "🖥️", fill: "#fef9e7", stroke: "#f0a500", x: 315, y: 120 },
+  { id: "api",      label: "API Layer",        sub: "REST / GraphQL",          icon: "⇄",  fill: "#f0f0f0", stroke: "#888888", x: 315, y: 220 },
+  { id: "auth",     label: "Auth",             sub: "Login / Tokens",          icon: "🔐", fill: "#fdecea", stroke: "#e05c5c", x: 80,  y: 330 },
+  { id: "backend",  label: "Backend",          sub: "Business Logic",          icon: "⚙️", fill: "#eaf7ee", stroke: "#3aaa5c", x: 315, y: 330 },
+  { id: "external", label: "Ext. Services",    sub: "Payments / Email / Maps", icon: "🔗", fill: "#f5eefa", stroke: "#9b59b6", x: 550, y: 330 },
+  { id: "database", label: "Database",         sub: "Persistent Storage",      icon: "🗄️", fill: "#fff3e0", stroke: "#e67e22", x: 190, y: 450 },
+  { id: "files",    label: "File Storage",     sub: "Images / Docs / Video",   icon: "📁", fill: "#e8f8ff", stroke: "#1abc9c", x: 440, y: 450 },
+];
+
+const edges = [
+  ["user", "frontend"],
+  ["frontend", "api"],
+  ["api", "auth"],
+  ["api", "backend"],
+  ["api", "external"],
+  ["backend", "database"],
+  ["backend", "files"],
+];
+
+const svg = document.getElementById("chart");
+const ns = "http://www.w3.org/2000/svg";
+
+// Arrow marker
+const defs = document.createElementNS(ns, "defs");
+const marker = document.createElementNS(ns, "marker");
+marker.setAttribute("id", "arrow");
+marker.setAttribute("markerWidth", "8");
+marker.setAttribute("markerHeight", "8");
+marker.setAttribute("refX", "6");
+marker.setAttribute("refY", "3");
+marker.setAttribute("orient", "auto");
+const path = document.createElementNS(ns, "path");
+path.setAttribute("d", "M0,0 L0,6 L8,3 z");
+path.setAttribute("fill", "#bbb");
+marker.appendChild(path);
+defs.appendChild(marker);
+svg.appendChild(defs);
+
+const nodeMap = {};
+nodes.forEach(n => nodeMap[n.id] = n);
+
+// Draw edges
+const lineEls = {};
+edges.forEach(([a, b]) => {
+  const na = nodeMap[a], nb = nodeMap[b];
+  const line = document.createElementNS(ns, "line");
+  line.setAttribute("x1", na.x + W/2);
+  line.setAttribute("y1", na.y + H);
+  line.setAttribute("x2", nb.x + W/2);
+  line.setAttribute("y2", nb.y);
+  line.setAttribute("stroke", "#ccc");
+  line.setAttribute("stroke-width", "1.5");
+  line.setAttribute("stroke-dasharray", "5,3");
+  line.setAttribute("marker-end", "url(#arrow)");
+  svg.appendChild(line);
+  lineEls[`${a}-${b}`] = { el: line, a, b };
+});
+
+// Draw nodes
+nodes.forEach(n => {
+  const g = document.createElementNS(ns, "g");
+  g.setAttribute("transform", `translate(${n.x}, ${n.y})`);
+  g.style.cursor = "pointer";
+
+  const rect = document.createElementNS(ns, "rect");
+  rect.setAttribute("width", W);
+  rect.setAttribute("height", H);
+  rect.setAttribute("rx", 10);
+  rect.setAttribute("fill", n.fill);
+  rect.setAttribute("stroke", n.stroke);
+  rect.setAttribute("stroke-width", "1.5");
+
+  const icon = document.createElementNS(ns, "text");
+  icon.setAttribute("x", W/2); icon.setAttribute("y", 22);
+  icon.setAttribute("text-anchor", "middle");
+  icon.setAttribute("font-size", "18");
+  icon.textContent = n.icon;
+
+  const label = document.createElementNS(ns, "text");
+  label.setAttribute("x", W/2); label.setAttribute("y", 38);
+  label.setAttribute("text-anchor", "middle");
+  label.setAttribute("font-size", "12");
+  label.setAttribute("font-weight", "700");
+  label.setAttribute("fill", "#222");
+  label.textContent = n.label;
+
+  g.appendChild(rect);
+  g.appendChild(icon);
+  g.appendChild(label);
+
+  if (n.sub) {
+    const sub = document.createElementNS(ns, "text");
+    sub.setAttribute("x", W/2); sub.setAttribute("y", 52);
+    sub.setAttribute("text-anchor", "middle");
+    sub.setAttribute("font-size", "9");
+    sub.setAttribute("fill", "#999");
+    sub.textContent = n.sub;
+    g.appendChild(sub);
+  }
+
+  g.addEventListener("mouseenter", () => {
+    rect.setAttribute("fill", n.stroke);
+    label.setAttribute("fill", "#fff");
+    Object.values(lineEls).forEach(({ el, a, b }) => {
+      if (a === n.id || b === n.id) {
+        el.setAttribute("stroke", "#555");
+        el.setAttribute("stroke-width", "2");
+        el.setAttribute("stroke-dasharray", "0");
+      }
+    });
+  });
+
+  g.addEventListener("mouseleave", () => {
+    rect.setAttribute("fill", n.fill);
+    label.setAttribute("fill", "#222");
+    Object.values(lineEls).forEach(({ el }) => {
+      el.setAttribute("stroke", "#ccc");
+      el.setAttribute("stroke-width", "1.5");
+      el.setAttribute("stroke-dasharray", "5,3");
+    });
+  });
+
+  svg.appendChild(g);
+});
+</script>
+</body>
+</html>
